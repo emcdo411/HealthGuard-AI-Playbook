@@ -1,6 +1,7 @@
 # HealthGuard AI: A ServiceNow App for Healthcare IT Compliance and Productivity
 
-![HealthGuard AI Banner](https://github.com/yourusername/HealthGuard-AI-Playbook/raw/main/images/healthguard-ai-banner.png)
+<img width="254" alt="image" src="https://github.com/user-attachments/assets/34c43df3-80b1-49ee-bcb3-37d65d7aecfa" />
+
 
 ## Overview
 
@@ -20,9 +21,65 @@ This repo, `HealthGuard-AI-Playbook`, documents the app’s development, feature
 
 ---
 
+## AI Ticket Categorization Workflow with MuleSoft-Epic Integration
+
+The AI Ticket Categorization workflow is a cornerstone of HealthGuard AI, automating ticket sorting in ServiceNow’s IT Service Management (ITSM) module while ensuring HL7 and HIPAA compliance. Below is the detailed workflow from start to finish, including the roles involved.
+
+### Roles Involved
+- **End User (e.g., Nurse, Physician):** Submits tickets (e.g., a nurse reporting an EHR issue). Access: “itil” role for ticket submission.
+- **IT Admin (e.g., EHR Support Team):** Configures Predictive Intelligence, resolves tickets. Access: “itil_admin” role for ticket management.
+- **Compliance Officer:** Monitors the compliance dashboard for HIPAA/HL7 adherence. Access: “compliance_admin” role for dashboard and audit logs.
+- **System Admin (e.g., ServiceNow Admin):** Manages app setup, MuleSoft integration, and test data loading. Access: Full admin rights.
+- **Automated System (HealthGuard AI App):** Executes AI categorization, PHI redaction, and HL7 validation. No direct user interaction.
+
+### Workflow Steps
+1. **Ticket Submission by End User**
+   - A nurse submits a ticket: “EHR login failed for Dr. Smith, Patient ID: PT001, SSN: 123-45-6789.”
+   - Ticket logged in the `incident` table as `INC001`. The nurse has no access to backend or compliance data.
+
+2. **PHI Filter Activation by HealthGuard AI**
+   - The app’s PHI Filter (configured by the System Admin) scans the ticket, redacting “Patient ID: PT001” and “SSN: 123-45-6789” to “Patient ID: [REDACTED], SSN: [REDACTED].”
+   - Ensures HIPAA compliance by preventing PHI exposure. Logged in the compliance dashboard.
+
+3. **MuleSoft-Epic Data Fetch by HealthGuard AI**
+   - The app triggers a MuleSoft API call (`/epic/user-metadata?userId=DrSmith`), querying Epic’s FHIR API (`/fhir/r4/Practitioner?identifier=DrSmith`).
+   - Fetches Dr. Smith’s role (Physician), department (Cardiology), and access level (EHR Admin), encrypted with TLS 1.2.
+   - MuleSoft logs the API call for HIPAA audits, mirrored in the compliance dashboard.
+
+4. **AI Categorization with Predictive Intelligence**
+   - Predictive Intelligence (configured by the IT Admin) uses the redacted description and Epic metadata to categorize the ticket as “EHR Access Issue” with “High” priority.
+   - Trained on 200 fake patient records, the model prioritizes physicians in critical departments.
+
+5. **HL7 Compliance Validation (if applicable)**
+   - If resolution involves an HL7 message (e.g., ADT A01 for access update), MuleSoft validates the message format (e.g., correct PID segment) before sending to Epic.
+   - Ensures HL7 compliance, logged in the compliance dashboard.
+
+6. **Ticket Assignment to IT Admin**
+   - The ticket is auto-assigned to the EHR Support Team with a note: “High priority—Physician in Cardiology.”
+   - IT Admin sees redacted details and resolves the issue (e.g., resets Dr. Smith’s login).
+
+7. **Resolution by IT Admin**
+   - IT Admin updates the ticket: “Reset EHR login for Dr. Smith, access restored,” and closes it.
+   - Resolution ensures Dr. Smith can access the EHR, supporting patient care.
+
+8. **Compliance Monitoring by Compliance Officer**
+   - The Compliance Officer reviews the dashboard:
+     - PHI Detection Rate: 100% (2/2 elements redacted).
+     - HL7 Compliance Score: 1 successful validation.
+     - Epic API Response Time: 150 ms.
+     - Compliance Alerts: 0 incidents.
+   - Audit logs confirm HIPAA/HL7 adherence.
+
+9. **Feedback Loop for AI Improvement**
+   - The resolution outcome is fed back into Predictive Intelligence to improve future categorizations.
+
+*Impact:* Reduces categorization time by 20-30%, ensures 100% HIPAA compliance, and improves ticket accuracy with Epic metadata.
+
+---
+
 ## Building HealthGuard AI: 5 Steps Using ServiceNow App Engine Studio (AES)
 
-Here’s how I built HealthGuard AI using ServiceNow’s App Engine Studio (AES), including loading synthetic test data to ensure compliance during development.
+Here’s how I built HealthGuard AI using ServiceNow’s App Engine Studio (AES), including loading synthetic test data.
 
 ### Step 1: Create the App in App Engine Studio
 - **Action:** In ServiceNow, navigate to **App Engine Studio** > **Create App**.
@@ -71,20 +128,6 @@ Here’s how I built HealthGuard AI using ServiceNow’s App Engine Studio (AES)
   - Ensured 100% HIPAA compliance with no PHI exposure.
   - Improved ticket accuracy with Epic metadata (e.g., prioritized physicians).
 - **Documentation:** Added test results, screenshots, and workflows to this README.
-
----
-
-## AI Ticket Categorization Workflow with MuleSoft-Epic Integration
-
-1. **Ticket Submission:** Nurse submits ticket: "EHR login failed for Dr. Smith, Patient ID: PT001, SSN: 123-45-6789."
-2. **PHI Filter:** Redacts PHI to "Patient ID: [REDACTED], SSN: [REDACTED]."
-3. **MuleSoft-Epic Data Fetch:** Queries Epic’s FHIR API (`/fhir/r4/Practitioner?identifier=DrSmith`) to fetch Dr. Smith’s role (Physician, Cardiology).
-4. **AI Categorization:** Predictive Intelligence labels ticket as "EHR Access Issue, High Priority."
-5. **HL7 Validation:** Validates any HL7 messages (e.g., ADT) before sending to Epic.
-6. **Assignment:** Ticket assigned to EHR Support Team.
-7. **Compliance Monitoring:** Dashboard logs API calls, PHI redaction, and HL7 validation.
-
-*Impact:* Improves ticket categorization accuracy by 20% using Epic metadata, ensures 100% HIPAA compliance.
 
 ---
 
