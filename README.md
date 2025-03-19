@@ -141,7 +141,9 @@ The dashboard monitors HealthGuard AI’s compliance in real-time:
 - **Data Access Frequency:** 50 calls/day.
 - **Compliance Alerts:** 0 incidents.
 
-![Compliance Dashboard](https://github.com/yourusername/HealthGuard-AI-Playbook/raw/main/images/compliance-dashboard.png)
+[Example of an SN Compliance Dashboard]
+![image](https://github.com/user-attachments/assets/46a4144b-d2a0-4df7-a7ca-fc0fd27853b3)
+
 
 ---
 
