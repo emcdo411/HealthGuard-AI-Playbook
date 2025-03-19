@@ -142,7 +142,8 @@ The dashboard monitors HealthGuard AI’s compliance in real-time:
 - **Compliance Alerts:** 0 incidents.
 
 [Example of an SN Compliance Dashboard]
-![image](https://github.com/user-attachments/assets/46a4144b-d2a0-4df7-a7ca-fc0fd27853b3)
+![image](https://github.com/user-attachments/assets/6053a79b-e398-49f8-b7ee-b282170be498)
+
 
 
 ---
