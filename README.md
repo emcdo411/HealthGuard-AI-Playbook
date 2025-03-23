@@ -1,156 +1,365 @@
-# HealthGuard AI: A ServiceNow App for Healthcare IT Compliance and Productivity
-
-<img width="254" alt="image" src="https://github.com/user-attachments/assets/34c43df3-80b1-49ee-bcb3-37d65d7aecfa" />
-
+# HealthPulse Analytics
 
 ## Overview
-
-As a healthcare IT Business Systems Analyst with over 10 years of experience, I developed **HealthGuard AI**, a custom ServiceNow app to maximize productivity for IT teams while ensuring strict compliance with HL7 and HIPAA regulations. This app leverages AI tools (Predictive Intelligence, Virtual Agent), MuleSoft-Epic integration, and a robust governance framework to streamline workflows like ticket categorization and user support in healthcare settings.
-
-This repo, `HealthGuard-AI-Playbook`, documents the app’s development, features, and impact, showcasing my expertise in healthcare IT, AI integration, and compliance governance.
+*HealthPulse Analytics* is a Python and RStudio-powered project that emulates the workflow of a Health Data Scientist in healthcare IT. As a U.S. Army veteran passionate about leveraging technology to improve lives, I built this to analyze synthetic datasets—patient records, IT support tickets, and compliance logs—mirroring real-world challenges like HIPAA compliance, IT productivity, and patient care support. This repository demonstrates my expertise in data generation, advanced visualization, and healthcare analytics.
 
 ---
 
-## Key Features
-
-- **AI Ticket Categorization:** Automates ticket sorting with ServiceNow’s Predictive Intelligence, reducing resolution time by 20-30%.
-- **Secure Virtual Agent:** Provides automated user support while masking PHI to ensure HIPAA compliance.
-- **HL7 Compliance Validator:** Validates HL7 messages (e.g., ADT, ORU) for clinical data exchange.
-- **Real-Time Compliance Dashboard:** Monitors AI actions, PHI redaction, and HL7 validation in real-time.
-- **MuleSoft-Epic Integration:** Securely pulls metadata from Epic EMR to enhance ticket categorization and support clinical workflows.
-
----
-
-## AI Ticket Categorization Workflow with MuleSoft-Epic Integration
-
-The AI Ticket Categorization workflow is a cornerstone of HealthGuard AI, automating ticket sorting in ServiceNow’s IT Service Management (ITSM) module while ensuring HL7 and HIPAA compliance. Below is the detailed workflow from start to finish, including the roles involved.
-
-### Roles Involved
-- **End User (e.g., Nurse, Physician):** Submits tickets (e.g., a nurse reporting an EHR issue). Access: “itil” role for ticket submission.
-- **IT Admin (e.g., EHR Support Team):** Configures Predictive Intelligence, resolves tickets. Access: “itil_admin” role for ticket management.
-- **Compliance Officer:** Monitors the compliance dashboard for HIPAA/HL7 adherence. Access: “compliance_admin” role for dashboard and audit logs.
-- **System Admin (e.g., ServiceNow Admin):** Manages app setup, MuleSoft integration, and test data loading. Access: Full admin rights.
-- **Automated System (HealthGuard AI App):** Executes AI categorization, PHI redaction, and HL7 validation. No direct user interaction.
-
-### Workflow Steps
-1. **Ticket Submission by End User**
-   - A nurse submits a ticket: “EHR login failed for Dr. Smith, Patient ID: PT001, SSN: 123-45-6789.”
-   - Ticket logged in the `incident` table as `INC001`. The nurse has no access to backend or compliance data.
-
-2. **PHI Filter Activation by HealthGuard AI**
-   - The app’s PHI Filter (configured by the System Admin) scans the ticket, redacting “Patient ID: PT001” and “SSN: 123-45-6789” to “Patient ID: [REDACTED], SSN: [REDACTED].”
-   - Ensures HIPAA compliance by preventing PHI exposure. Logged in the compliance dashboard.
-
-3. **MuleSoft-Epic Data Fetch by HealthGuard AI**
-   - The app triggers a MuleSoft API call (`/epic/user-metadata?userId=DrSmith`), querying Epic’s FHIR API (`/fhir/r4/Practitioner?identifier=DrSmith`).
-   - Fetches Dr. Smith’s role (Physician), department (Cardiology), and access level (EHR Admin), encrypted with TLS 1.2.
-   - MuleSoft logs the API call for HIPAA audits, mirrored in the compliance dashboard.
-
-4. **AI Categorization with Predictive Intelligence**
-   - Predictive Intelligence (configured by the IT Admin) uses the redacted description and Epic metadata to categorize the ticket as “EHR Access Issue” with “High” priority.
-   - Trained on 200 fake patient records, the model prioritizes physicians in critical departments.
-
-5. **HL7 Compliance Validation (if applicable)**
-   - If resolution involves an HL7 message (e.g., ADT A01 for access update), MuleSoft validates the message format (e.g., correct PID segment) before sending to Epic.
-   - Ensures HL7 compliance, logged in the compliance dashboard.
-
-6. **Ticket Assignment to IT Admin**
-   - The ticket is auto-assigned to the EHR Support Team with a note: “High priority—Physician in Cardiology.”
-   - IT Admin sees redacted details and resolves the issue (e.g., resets Dr. Smith’s login).
-
-7. **Resolution by IT Admin**
-   - IT Admin updates the ticket: “Reset EHR login for Dr. Smith, access restored,” and closes it.
-   - Resolution ensures Dr. Smith can access the EHR, supporting patient care.
-
-8. **Compliance Monitoring by Compliance Officer**
-   - The Compliance Officer reviews the dashboard:
-     - PHI Detection Rate: 100% (2/2 elements redacted).
-     - HL7 Compliance Score: 1 successful validation.
-     - Epic API Response Time: 150 ms.
-     - Compliance Alerts: 0 incidents.
-   - Audit logs confirm HIPAA/HL7 adherence.
-
-9. **Feedback Loop for AI Improvement**
-   - The resolution outcome is fed back into Predictive Intelligence to improve future categorizations.
-
-*Impact:* Reduces categorization time by 20-30%, ensures 100% HIPAA compliance, and improves ticket accuracy with Epic metadata.
+## Table of Contents
+- [Datasets](#datasets)
+- [Code](#code)
+  - [Python Scripts](#python-scripts)
+  - [R Scripts](#r-scripts)
+- [Setup Instructions](#setup-instructions)
+- [Why It Matters](#why-it-matters)
+- [Conclusion](#conclusion)
+- [License](#license)
 
 ---
 
-## Building HealthGuard AI: 5 Steps Using ServiceNow App Engine Studio (AES)
+## Datasets
+This project includes three `.csv` files, each generated with Python and visualized in RStudio:
 
-Here’s how I built HealthGuard AI using ServiceNow’s App Engine Studio (AES), including loading synthetic test data.
+1. **`it_tickets.csv`**:
+   - **Columns**: `Ticket_ID`, `User_Role`, `Department`, `Issue_Description`, `PHI_Detected`, `Priority`, `Submission_Date`, `Resolution_Date`, `Status`
+   - **Rows**: 300
+   - **Description**: Simulates IT support tickets in a healthcare setting, tracking issues like EHR login failures.
 
-### Step 1: Create the App in App Engine Studio
-- **Action:** In ServiceNow, navigate to **App Engine Studio** > **Create App**.
-- **Details:**
-  - Name: `HealthGuard AI`
-  - Description: “A healthcare IT app to enhance productivity and ensure HL7/HIPAA compliance using AI.”
-  - Scope: `x_yourorg_healthguard_ai`
-- **Outcome:** AES generates a base app with a workspace, ready for customization.
+2. **`compliance_logs.csv`**:
+   - **Columns**: `Log_ID`, `Ticket_ID`, `PHI_Redaction_Rate`, `Compliance_Score`, `Region`, `Latitude`, `Longitude`, `Log_Date`
+   - **Rows**: 300
+   - **Description**: Logs HIPAA compliance metrics tied to IT tickets, with geographic data for regional analysis.
 
-### Step 2: Build Core Features with AI and Compliance
-- **Action:** Use AES to add features to the app.
-- **Features Added:**
-  - **AI Ticket Categorization:** Configured Predictive Intelligence to auto-categorize tickets (e.g., “EHR Access Issue”).
-    - Scripted a PHI Filter using GlideRecord to redact sensitive data (e.g., SSNs) before AI processing.
-  - **Secure Virtual Agent:** Set up a Virtual Agent to handle user queries (e.g., “How do I reset my EHR login?”), with data masking for PHI.
-  - **HL7 Validator:** Created a business rule to validate HL7 messages (e.g., ADT) using MuleSoft’s data transformation.
-  - **Compliance Dashboard:** Built a dashboard in Performance Analytics with widgets for PHI detection rate, HL7 compliance score, and user activity logs.
-- **Outcome:** Core app functionality established, with AI and compliance features integrated.
-
-### Step 3: Integrate MuleSoft with Epic EMR
-- **Action:** Set up MuleSoft to connect ServiceNow with Epic EMR for contextual data.
-- **Details:**
-  - Configured MuleSoft’s ServiceNow Connector to read/write to the `incident` table.
-  - Used MuleSoft’s FHIR Connector to query Epic’s API (`/fhir/r4/Practitioner?identifier=DrSmith`) for user metadata (e.g., role, department).
-  - Created a RESTful API (`/epic/user-metadata?userId={userId}`) to securely fetch data, encrypted with TLS 1.2.
-  - Ensured compliance with OAuth 2.0 for access control and logged all API calls for HIPAA audits.
-- **Outcome:** MuleSoft-Epic integration enhances ticket categorization by providing user context (e.g., prioritizing physicians in Cardiology).
-
-### Step 4: Load Synthetic Test Data
-- **Action:** Loaded a spreadsheet with 200 fake patients to test the app safely.
-- **Details:**
-  - Created a CSV file (`fake_patients.csv`) with columns: Patient ID, SSN, Address, Physician, Phone Number, Insurance Policy Number, Next of Kin.
-  - Sample Row: `PT001, 123-45-6789, 123 Maple St, Austin, TX 78701, Dr. John Smith, 512-555-1234, INS-123456, Jane Doe, Sister`.
-  - In ServiceNow, went to **System Import Sets** > **Load Data**, imported the CSV into a new table (`u_fake_patients`), and mapped columns.
-  - Added a dashboard widget to display the data (e.g., Patient ID, Physician, Next of Kin), with RBAC to restrict access.
-- **Outcome:** Synthetic data enables safe testing of PHI Filter, HL7 Validator, and compliance features without risking real patient data.
-
-### Step 5: Test and Document Results
-- **Action:** Tested the app with synthetic data and documented outcomes.
-- **Testing:**
-  - Simulated a ticket: “EHR login failed for Dr. Smith, Patient ID: PT001, SSN: 123-45-6789.”
-  - Verified PHI Filter redacted sensitive data, Predictive Intelligence categorized the ticket as “EHR Access Issue,” and MuleSoft pulled Dr. Smith’s role from Epic.
-  - Checked the compliance dashboard: 100% PHI redaction, 99% HL7 validation rate, 0 compliance incidents.
-- **Results:**
-  - Reduced ticket categorization time by 20-30%.
-  - Ensured 100% HIPAA compliance with no PHI exposure.
-  - Improved ticket accuracy with Epic metadata (e.g., prioritized physicians).
-- **Documentation:** Added test results, screenshots, and workflows to this README.
+3. **`patient_records.csv`**:
+   - **Columns**: `Patient_ID`, `Name`, `SSN`, `Address`, `Physician`, `Department`, `Last_Visit_Date`
+   - **Rows**: 200
+   - **Description**: Synthetic patient records for analyzing departmental workloads and visit trends.
 
 ---
 
-## Compliance Dashboard
+## Code
 
-The dashboard monitors HealthGuard AI’s compliance in real-time:
+### Python Scripts
 
-- **PHI Detection Rate:** 100% (all sensitive data redacted).
-- **HL7 Compliance Score:** 99% (successful message validations).
-- **Epic API Response Time:** 150 ms.
-- **Data Access Frequency:** 50 calls/day.
-- **Compliance Alerts:** 0 incidents.
+#### 1. `generate_it_tickets.py`
+```python
+import pandas as pd
+import numpy as np
+from faker import Faker
+import random
 
-[Example of an SN Compliance Dashboard]
-![image](https://github.com/user-attachments/assets/6053a79b-e398-49f8-b7ee-b282170be498)
+fake = Faker()
+np.random.seed(42)
 
+def generate_it_tickets(n=300):
+    roles = ['Nurse', 'Physician', 'Admin']
+    departments = ['Cardiology', 'Neurology', 'Oncology', 'Pediatrics', 'Orthopedics']
+    issues = ['EHR Login Failure', 'System Crash', 'Data Access Issue', 'Printer Failure']
+    data = {
+        'Ticket_ID': [f"INC{str(i).zfill(4)}" for i in range(1, n+1)],
+        'User_Role': random.choices(roles, k=n),
+        'Department': random.choices(departments, k=n),
+        'Issue_Description': [f"{random.choice(issues)} for {fake.name()}, Patient ID: PT{str(random.randint(1, 200)).zfill(3)}" for _ in range(n)],
+        'PHI_Detected': random.choices([True, False], weights=[70, 30], k=n),
+        'Priority': random.choices(['High', 'Medium', 'Low'], weights=[30, 50, 20], k=n),
+        'Submission_Date': [fake.date_time_between(start_date='-1y', end_date='today').strftime('%Y-%m-%d %H:%M:%S') for _ in range(n)],
+        'Resolution_Date': [fake.date_time_between_dates(datetime_start=fake.date_time_between(start_date='-1y', end_date='today'), end_date='today').strftime('%Y-%m-%d %H:%M:%S') if random.random() > 0.1 else '' for _ in range(n)],
+        'Status': []  # To be filled based on Resolution_Date
+    }
+    data['Status'] = [random.choice(['Open', 'Resolved']) if res_date else 'Open' for res_date in data['Resolution_Date']]
+    return pd.DataFrame(data)
 
+tickets_df = generate_it_tickets(300)
+tickets_df.to_csv('it_tickets.csv', index=False)
+print("Generated 'it_tickets.csv'")
+```
+
+#### 2. `generate_compliance_logs.py`
+```python
+import pandas as pd
+import numpy as np
+from faker import Faker
+import random
+
+fake = Faker()
+np.random.seed(42)
+
+us_cities = {
+    'New York City, NY': (40.7128, -74.0060), 'Chicago, IL': (41.8781, -87.6298),
+    'Houston, TX': (29.7604, -95.3698), 'Los Angeles, CA': (34.0522, -118.2437),
+    'Phoenix, AZ': (33.4484, -112.0740), 'Seattle, WA': (47.6062, -122.3321),
+    'Miami, FL': (25.7617, -80.1918), 'Denver, CO': (39.7392, -104.9903),
+    'Atlanta, GA': (33.7490, -84.3880), 'Boston, MA': (42.3601, -71.0589)
+}
+
+def generate_compliance_logs(n=300):
+    cities = list(us_cities.keys())
+    ticket_ids = [f"INC{str(i).zfill(4)}" for i in range(1, n+1)]
+    data = {
+        'Log_ID': [f"LOG{str(i).zfill(4)}" for i in range(1, n+1)],
+        'Ticket_ID': ticket_ids,
+        'PHI_Redaction_Rate': [1.0 if random.random() > 0.1 else random.uniform(0.8, 0.99) for _ in range(n)],
+        'Compliance_Score': [random.uniform(0.9, 1.0) if r == 1.0 else random.uniform(0.7, 0.9) for r in data['PHI_Redaction_Rate']],
+        'Region': random.choices(cities, k=n),
+        'Latitude': [us_cities[city][0] for city in random.choices(cities, k=n)],
+        'Longitude': [us_cities[city][1] for city in random.choices(cities, k=n)],
+        'Log_Date': [fake.date_between(start_date='-1y', end_date='today').strftime('%Y-%m-%d') for _ in range(n)]
+    }
+    return pd.DataFrame(data)
+
+compliance_df = generate_compliance_logs(300)
+compliance_df.to_csv('compliance_logs.csv', index=False)
+print("Generated 'compliance_logs.csv'")
+```
+
+#### 3. `generate_patient_records.py`
+```python
+import pandas as pd
+import numpy as np
+from faker import Faker
+import random
+
+fake = Faker()
+np.random.seed(42)
+
+def generate_patient_records(n=200):
+    departments = ['Cardiology', 'Neurology', 'Oncology', 'Pediatrics', 'Orthopedics']
+    data = {
+        'Patient_ID': [f"PT{str(i).zfill(3)}" for i in range(1, n+1)],
+        'Name': [fake.name() for _ in range(n)],
+        'SSN': [fake.ssn() for _ in range(n)],
+        'Address': [fake.address().replace('\n', ', ') for _ in range(n)],
+        'Physician': [fake.name() for _ in range(n)],
+        'Department': random.choices(departments, k=n),
+        'Last_Visit_Date': [fake.date_between(start_date='-1y', end_date='today').strftime('%Y-%m-%d') for _ in range(n)]
+    }
+    return pd.DataFrame(data)
+
+patient_df = generate_patient_records(200)
+patient_df.to_csv('patient_records.csv', index=False)
+print("Generated 'patient_records.csv'")
+```
+
+### R Scripts
+
+#### 1. `ticket_resolution_time.R`
+```R
+if (!require(ggplot2)) install.packages("ggplot2"); library(ggplot2)
+if (!require(dplyr)) install.packages("dplyr"); library(dplyr)
+if (!require(plotly)) install.packages("plotly"); library(plotly)
+
+setwd("C:/Users/Veteran")
+csv_file <- "it_tickets.csv"
+if (!file.exists(csv_file)) stop("Error: it_tickets.csv not found")
+
+tickets <- read.csv("it_tickets.csv")
+tickets$Submission_Date <- as.POSIXct(tickets$Submission_Date, format="%Y-%m-%d %H:%M:%S", tz="UTC")
+tickets$Resolution_Date <- as.POSIXct(tickets$Resolution_Date, format="%Y-%m-%d %H:%M:%S", tz="UTC")
+tickets <- tickets %>% 
+  mutate(Resolution_Time_Hours = ifelse(Status == "Resolved" & !is.na(Resolution_Date), 
+                                        as.numeric(difftime(Resolution_Date, Submission_Date, units="hours")), 
+                                        NA)) %>%
+  filter(!is.na(Resolution_Time_Hours))
+
+ticket_boxplot <- ggplot(tickets, aes(x = Department, y = Resolution_Time_Hours, fill = Priority)) +
+  geom_boxplot() +
+  theme_minimal() +
+  labs(title = "IT Ticket Resolution Time by Department (Boxplot)", 
+       x = "Department", 
+       y = "Resolution Time (Hours)") +
+  theme(legend.position = "right", 
+        plot.title = element_text(hjust = 0.5, size = 16, face = "bold"))
+
+print("Displaying static boxplot:")
+print(ticket_boxplot)
+
+ticket_scatter <- ggplot(tickets, aes(x = Department, y = Resolution_Time_Hours, color = Priority, 
+                                      text = paste("Ticket ID:", Ticket_ID))) +
+  geom_jitter(width = 0.2, alpha = 0.7, size = 2) +
+  theme_minimal() +
+  labs(title = "IT Ticket Resolution Time by Department (Scatter)", 
+       x = "Department", 
+       y = "Resolution Time (Hours)", 
+       color = "Priority") +
+  theme(legend.position = "right", 
+        plot.title = element_text(hjust = 0.5, size = 16, face = "bold"))
+
+print("Displaying static scatter plot:")
+print(ticket_scatter)
+
+ticket_plotly <- ggplotly(ticket_scatter, tooltip = c("x", "y", "color", "text"))
+print("Displaying interactive scatter plot:")
+print(ticket_plotly)
+
+ggsave("ticket_resolution_time_boxplot.png", ticket_boxplot, width = 10, height = 6, dpi = 300)
+ggsave("ticket_resolution_time_scatter.png", ticket_scatter, width = 10, height = 6, dpi = 300)
+htmlwidgets::saveWidget(ticket_plotly, "ticket_resolution_time.html")
+cat("Saved as 'ticket_resolution_time_boxplot.png', 'ticket_resolution_time_scatter.png', and 'ticket_resolution_time.html'\n")
+```
+
+#### 2. `compliance_map.R`
+```R
+if (!require(ggplot2)) install.packages("ggplot2"); library(ggplot2)
+if (!require(ggmap)) install.packages("ggmap"); library(ggmap)
+if (!require(plotly)) install.packages("plotly"); library(plotly)
+if (!require(viridis)) install.packages("viridis"); library(viridis)
+
+register_stadiamaps("9c644007-0572-4892-915a-8da356fe40ae")
+setwd("C:/Users/Veteran")
+csv_file <- "compliance_logs.csv"
+if (!file.exists(csv_file)) stop("Error: compliance_logs.csv not found")
+
+compliance <- read.csv("compliance_logs.csv")
+us_bbox <- c(left = -125, bottom = 24, right = -66, top = 50)
+us_terrain <- get_stadiamap(bbox = us_bbox, maptype = "stamen_terrain", zoom = 5)
+if (is.null(us_terrain)) stop("Error: Failed to load Stadia Maps terrain data.")
+
+compliance_base <- ggmap(us_terrain) +
+  geom_point(data = compliance, aes(x = Longitude, y = Latitude, color = Compliance_Score, size = PHI_Redaction_Rate), 
+             alpha = 0.7, shape = 16) +
+  scale_color_viridis_c(option = "viridis", direction = -1) +
+  scale_size_continuous(range = c(2, 8)) +
+  labs(title = "HIPAA Compliance Across U.S. Regions",
+       subtitle = "Point size reflects PHI Redaction Rate",
+       x = "Longitude", y = "Latitude", 
+       color = "Compliance Score", size = "PHI Redaction Rate") +
+  theme_minimal() +
+  theme(legend.position = "right",
+        plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+        plot.subtitle = element_text(hjust = 0.5, size = 12))
+
+print("Displaying static map:")
+print(compliance_base)
+
+compliance_plotly <- ggplotly(compliance_base, 
+                             tooltip = c("x", "y", "color", "size", "text"),
+                             text = ~paste("Region:", Region, "<br>Ticket ID:", Ticket_ID, "<br>Log Date:", Log_Date))
+print("Displaying interactive map:")
+print(compliance_plotly)
+
+ggsave("compliance_map.png", compliance_base, width = 12, height = 8, dpi = 300)
+htmlwidgets::saveWidget(compliance_plotly, "compliance_map.html")
+cat("Saved as 'compliance_map.png' and 'compliance_map.html'\n")
+```
+
+#### 3. `patient_visits.R`
+```R
+if (!require(ggplot2)) install.packages("ggplot2"); library(ggplot2)
+if (!require(dplyr)) install.packages("dplyr"); library(dplyr)
+if (!require(plotly)) install.packages("plotly"); library(plotly)
+
+setwd("C:/Users/Veteran")
+csv_file <- "patient_records.csv"
+if (!file.exists(csv_file)) stop("Error: patient_records.csv not found")
+
+patients <- read.csv("patient_records.csv")
+patients$Last_Visit_Date <- as.Date(patients$Last_Visit_Date, format="%Y-%m-%d")
+
+dept_counts <- patients %>% 
+  group_by(Department) %>% 
+  summarise(Patient_Count = n())
+
+bar_plot <- ggplot(dept_counts, aes(x = Department, y = Patient_Count, fill = Department)) +
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  labs(title = "Patient Distribution by Department", 
+       x = "Department", 
+       y = "Number of Patients") +
+  theme(legend.position = "none", 
+        plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+        axis.text.x = element_text(angle = 45, hjust = 1))
+
+print("Displaying static bar plot:")
+print(bar_plot)
+
+visit_trend <- patients %>% 
+  group_by(Last_Visit_Date) %>% 
+  summarise(Visit_Count = n())
+
+time_plot <- ggplot(visit_trend, aes(x = Last_Visit_Date, y = Visit_Count)) +
+  geom_line(color = "blue") +
+  geom_point(color = "blue", size = 2) +
+  theme_minimal() +
+  labs(title = "Patient Visits Over Time", 
+       x = "Date", 
+       y = "Number of Visits") +
+  scale_x_date(date_breaks = "1 month", date_labels = "%b %Y") +
+  theme(plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+        axis.text.x = element_text(angle = 45, hjust = 1))
+
+print("Displaying static time series plot:")
+print(time_plot)
+
+time_plotly <- ggplotly(time_plot, tooltip = c("x", "y"))
+print("Displaying interactive time series plot:")
+print(time_plotly)
+
+ggsave("patient_dept_bar.png", bar_plot, width = 8, height = 6, dpi = 300)
+ggsave("patient_visit_trend.png", time_plot, width = 10, height = 6, dpi = 300)
+htmlwidgets::saveWidget(time_plotly, "patient_visit_trend.html")
+cat("Saved as 'patient_dept_bar.png', 'patient_visit_trend.png', and 'patient_visit_trend.html'\n")
+```
 
 ---
 
-## Why This Matters
+## Setup Instructions
 
-- **Productivity:** Automates repetitive tasks, saving healthcare IT teams 20-30% of their time.
+### Prerequisites
+- **Python**: Install required packages:
+  ```bash
+  pip install pandas numpy faker
+  ```
+- **R**: Install RStudio and required packages:
+  ```R
+  install.packages(c("ggplot2", "dplyr", "plotly", "ggmap", "viridis"))
+  ```
+- **Stadia Maps API Key**: Use `9c644007-0572-4892-915a-8da356fe40ae` (or get your own at [Stadia Maps](https://stadiamaps.com/)).
+
+### Steps
+1. **Clone the Repository**:
+   ```bash
+   git clone https://github.com/yourusername/healthpulse-analytics.git
+   cd healthpulse-analytics
+   ```
+2. **Generate Datasets**:
+   - Run each Python script:
+     ```bash
+     python generate_it_tickets.py
+     python generate_compliance_logs.py
+     python generate_patient_records.py
+     ```
+   - Move `.csv` files to `C:/Users/Veteran` (or adjust `setwd()` in R scripts).
+3. **Visualize Data**:
+   - Open RStudio, load each `.R` script, and run (`Ctrl+Alt+R`).
+   - Outputs saved as `.png` (static) and `.html` (interactive) in `C:/Users/Veteran`.
+
+---
+
+## Why It Matters
+This project bridges healthcare IT and data science, offering actionable insights for real-world challenges:
+- **IT Productivity**: The ticket resolution time visualizations (`it_tickets.csv`) reveal how quickly IT issues are fixed by department and priority. Faster resolutions mean less downtime for clinicians, directly improving patient care delivery.
+- **HIPAA Compliance**: The compliance map (`compliance_logs.csv`) highlights regional trends in PHI redaction and compliance scores. For a Health Data Scientist, this identifies areas needing stricter protocols, reducing legal and ethical risks.
+- **Patient Care Insights**: The patient visit analyses (`patient_records.csv`) show departmental workloads and visit trends over time. This helps healthcare IT teams anticipate resource needs—e.g., more support for Cardiology during peak seasons—enhancing operational efficiency.
+- **Professional Impact**: As a portfolio piece, it showcases my ability to generate, analyze, and visualize healthcare data, aligning with Health Data Scientist roles that demand both technical prowess and domain knowledge.
+
+---
+
+## Conclusion
+*HealthPulse Analytics* is a testament to the power of Python and RStudio in healthcare analytics. From synthetic data generation to interactive visualizations, it emulates a Health Data Scientist’s toolkit with flair. Whether you’re exploring IT ticket resolution, mapping compliance, or tracking patient visits, this project invites you to dive in, adapt the code, and uncover insights. Clone it, run it, and let’s make healthcare IT smarter together!
+
+---
+
+## License
+This project is licensed under the MIT License—see the `LICENSE` file for details.
+
+---
+
+### Notes for GitHub
+- **Repository Structure**: Add all `.py`, `.R`, and `.csv` files to your repo. Include sample outputs (e.g., `.png` files) in an `/outputs` folder for visual appeal.
+- **Personalize**: Replace `https://github.com/yourusername/healthpulse-analytics.git` with your actual repo URL. Let me know your GitHub username if you want me to update it!
+- **Stadia Maps API**: If sharing publicly, consider removing the API key from `compliance_map.R` and instructing users to get their own, or keep it private if this is personal.
+
+This README is ready to shine on GitHub—comprehensive, engaging, and a perfect showcase of your work. What’s your GitHub username so I can tailor the clone URL? Any final tweaks you’d like before pushing it live?
 - **Compliance:** Embeds HL7 and HIPAA safeguards, reducing risk of violations.
 - **Patient Care:** Ensures clinicians (e.g., Dr. Smith) get quick IT support, improving care delivery.
 - **Professional Impact:** Showcases my expertise in healthcare IT, AI integration, and compliance governance—key for Business Analyst roles.
